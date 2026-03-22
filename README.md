@@ -1,9 +1,9 @@
 ﻿# Text/Image to Video (API-powered)
 
-A simple web app that turns text or an image into a video by calling any external video generation API. Designed for low-end PCs: all heavy work happens on the API side.
+A simple web app that turns text or an image into a video, and text into an image, by calling any external generation API. Designed for low-end PCs: all heavy work happens on the API side.
 
 ## Features
-- Text to video or image to video
+- Text to video, image to video, or text to image
 - Works with any provider via a JSON template
 - Optional polling for async providers
 - Railway-ready
@@ -39,6 +39,7 @@ If your provider is async, set polling variables:
 - `VIDEO_API_POLL_DONE_PATH`
 - `VIDEO_API_POLL_DONE_VALUE`
 - `VIDEO_API_RESPONSE_VIDEO_URL_PATH`
+- `VIDEO_API_RESPONSE_IMAGE_URL_PATH`
 
 ## Notes
 - Image upload is sent as base64 in the JSON template.

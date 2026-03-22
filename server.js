@@ -33,6 +33,13 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
     const provider = String(process.env.PROVIDER || "custom").toLowerCase();
 
     if (provider === "mock") {
+      if (mode === "text-image") {
+        const imageUrl = process.env.MOCK_IMAGE_URL || "";
+        if (!imageUrl) {
+          return res.status(500).json({ error: "MOCK_IMAGE_URL is not set." });
+        }
+        return res.json({ imageUrl, provider: "mock" });
+      }
       const videoUrl = process.env.MOCK_VIDEO_URL || "";
       if (!videoUrl) {
         return res.status(500).json({ error: "MOCK_VIDEO_URL is not set." });
@@ -98,6 +105,7 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
       const donePath = process.env.VIDEO_API_POLL_DONE_PATH || "status";
       const doneValue = process.env.VIDEO_API_POLL_DONE_VALUE || "succeeded";
       const videoUrlPath = process.env.VIDEO_API_RESPONSE_VIDEO_URL_PATH || "videoUrl";
+      const imageUrlPath = process.env.VIDEO_API_RESPONSE_IMAGE_URL_PATH || "imageUrl";
 
       for (let i = 0; i < maxTries; i += 1) {
         await sleep(intervalMs);
@@ -113,10 +121,18 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
 
         const pollJson = safeJson(pollText);
         const status = getByPath(pollJson, donePath);
-        const videoUrl = getByPath(pollJson, videoUrlPath);
-
-        if (String(status) === String(doneValue) && videoUrl) {
-          return res.json({ videoUrl, provider: "custom" });
+        if (String(status) === String(doneValue)) {
+          if (mode === "text-image") {
+            const imageUrl = getByPath(pollJson, imageUrlPath);
+            if (imageUrl) {
+              return res.json({ imageUrl, provider: "custom" });
+            }
+          } else {
+            const videoUrl = getByPath(pollJson, videoUrlPath);
+            if (videoUrl) {
+              return res.json({ videoUrl, provider: "custom" });
+            }
+          }
         }
       }
 
@@ -124,6 +140,18 @@ app.post("/api/generate", upload.single("image"), async (req, res) => {
     }
 
     const videoUrlPath = process.env.VIDEO_API_RESPONSE_VIDEO_URL_PATH || "videoUrl";
+    const imageUrlPath = process.env.VIDEO_API_RESPONSE_IMAGE_URL_PATH || "imageUrl";
+    if (mode === "text-image") {
+      const directImageUrl = getByPath(startJson, imageUrlPath);
+      if (!directImageUrl) {
+        return res.status(502).json({
+          error: "Image URL not found in response",
+          detail: { imageUrlPath, startJson }
+        });
+      }
+      return res.json({ imageUrl: directImageUrl, provider: "custom" });
+    }
+
     const directVideoUrl = getByPath(startJson, videoUrlPath);
     if (!directVideoUrl) {
       return res.status(502).json({
